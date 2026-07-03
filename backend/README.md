@@ -21,6 +21,8 @@ Open:
 ```text
 http://127.0.0.1:8000/api/health/live
 http://127.0.0.1:8000/api/health/ready
+http://127.0.0.1:8000/api/tasks
+http://127.0.0.1:8000/api/tasks/RF-1042
 http://127.0.0.1:8000/docs
 ```
 

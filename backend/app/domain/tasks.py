@@ -1,4 +1,5 @@
-from datetime import datetime, timedelta
+from datetime import UTC, datetime, timedelta
+from decimal import Decimal
 from enum import StrEnum
 from uuid import UUID
 
@@ -22,6 +23,10 @@ class TaskCreate(BaseModel):
     channel: RequestChannel
     received_at: datetime
     correlation_id: str = Field(min_length=1, max_length=128)
+    summary: str = "Refund request"
+    due_at: datetime | None = None
+    exposure_amount: Decimal | None = Field(default=None, ge=0)
+    exposure_currency: str | None = Field(default=None, pattern=r"^[A-Z]{3}$")
 
     @field_validator("received_at")
     @classmethod
@@ -29,6 +34,9 @@ class TaskCreate(BaseModel):
         if value.utcoffset() != timedelta(0):
             raise ValueError("received_at must be timezone-aware UTC")
         return value
+
+    def effective_due_at(self) -> datetime:
+        return self.due_at or datetime.now(UTC) + timedelta(minutes=60)
 
 
 class TaskRecord(BaseModel):
@@ -41,6 +49,10 @@ class TaskRecord(BaseModel):
     version: int
     created_at: datetime
     updated_at: datetime
+    summary: str
+    due_at: datetime
+    exposure_amount: Decimal | None
+    exposure_currency: str | None
 
 
 class RequestRecord(BaseModel):

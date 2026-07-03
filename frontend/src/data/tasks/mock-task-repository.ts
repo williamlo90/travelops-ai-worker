@@ -3,6 +3,7 @@ import { taskInboxFoundationScenario } from "@/mocks/scenarios/task-inbox-scenar
 import { taskWorkspaceFixtures } from "@/mocks/fixtures/task-workspace-fixtures";
 
 export const mockTaskRepository: TaskRepository = {
+  source: "mock",
   async listTaskSummaries() {
     return taskInboxFoundationScenario.tasks.map((task) => ({
       ...task,

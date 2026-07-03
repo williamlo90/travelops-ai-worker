@@ -1,4 +1,4 @@
-import { mockTaskRepository } from "@/data/tasks/mock-task-repository";
+import { getTaskRepository } from "@/data/tasks/task-repository-provider";
 import { TaskWorkspace } from "@/features/tasks/components/task-workspace";
 import { notFound } from "next/navigation";
 
@@ -8,7 +8,7 @@ export default async function TaskWorkspacePage({
   params: Promise<{ taskId: string }>;
 }) {
   const { taskId } = await params;
-  const workspace = await mockTaskRepository.getTaskWorkspace(taskId);
+  const workspace = await getTaskRepository().getTaskWorkspace(taskId);
 
   if (!workspace) notFound();
 

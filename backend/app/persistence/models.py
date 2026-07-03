@@ -1,4 +1,5 @@
 from datetime import UTC, datetime
+from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
@@ -8,6 +9,7 @@ from sqlalchemy import (
     ForeignKey,
     Index,
     Integer,
+    Numeric,
     String,
     Text,
     UniqueConstraint,
@@ -42,6 +44,10 @@ class TaskModel(Base):
     task_type: Mapped[str] = mapped_column(String(32), nullable=False)
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
+    summary: Mapped[str] = mapped_column(String(240), nullable=False, default="Refund request")
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    exposure_amount: Mapped[Decimal | None] = mapped_column(Numeric(12, 2))
+    exposure_currency: Mapped[str | None] = mapped_column(String(3))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -123,5 +129,44 @@ class AuditEventModel(Base):
     data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
     correlation_id: Mapped[str] = mapped_column(String(128), nullable=False)
     occurred_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+
+class CustomerSnapshotModel(Base):
+    __tablename__ = "customer_snapshots"
+    __table_args__ = (UniqueConstraint("task_id", name="uq_customer_snapshots_task_id"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+    )
+    customer_id: Mapped[str] = mapped_column(String(32), nullable=False)
+    name: Mapped[str] = mapped_column(String(160), nullable=False)
+    tier: Mapped[str] = mapped_column(String(16), nullable=False)
+    locale: Mapped[str] = mapped_column(String(16), nullable=False)
+    contact: Mapped[str] = mapped_column(String(254), nullable=False)
+    captured_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+
+class BookingSnapshotModel(Base):
+    __tablename__ = "booking_snapshots"
+    __table_args__ = (UniqueConstraint("task_id", name="uq_booking_snapshots_task_id"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="CASCADE"), nullable=False
+    )
+    reference: Mapped[str] = mapped_column(String(64), nullable=False)
+    service_date_label: Mapped[str] = mapped_column(String(32), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    provider: Mapped[str] = mapped_column(String(120), nullable=False)
+    itinerary: Mapped[str] = mapped_column(String(240), nullable=False)
+    passengers: Mapped[int] = mapped_column(Integer, nullable=False)
+    paid_amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    captured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )

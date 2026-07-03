@@ -32,6 +32,10 @@ class TaskRepository:
             public_id=command.public_id,
             task_type=command.task_type.value,
             status=RunStatus.QUEUED.value,
+            summary=command.summary,
+            due_at=command.effective_due_at(),
+            exposure_amount=command.exposure_amount,
+            exposure_currency=command.exposure_currency,
         )
         request = RequestModel(
             task=task,

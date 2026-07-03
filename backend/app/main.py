@@ -7,6 +7,7 @@ from fastapi import FastAPI
 from app.api.errors import register_error_handlers
 from app.api.middleware import register_http_middleware
 from app.api.routes.health import create_health_router
+from app.api.routes.tasks import router as tasks_router
 from app.config import Settings, get_settings
 from app.logging import configure_logging
 from app.persistence.database import Database
@@ -40,6 +41,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
             database_check=database.is_ready if database else None,
         )
     )
+    app.include_router(tasks_router)
     return app
 
 

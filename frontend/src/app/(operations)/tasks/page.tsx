@@ -1,20 +1,22 @@
-import { mockTaskRepository } from "@/data/tasks/mock-task-repository";
+import { getTaskRepository } from "@/data/tasks/task-repository-provider";
 import { InteractiveTaskInbox } from "@/features/tasks/components/interactive-task-inbox";
-import { taskInboxFoundationScenario } from "@/mocks/scenarios/task-inbox-scenarios";
 import type { Metadata } from "next";
 
 export const metadata: Metadata = {
   title: "Task Inbox",
 };
 
+export const dynamic = "force-dynamic";
+
 export default async function TaskInboxPage() {
-  const tasks = await mockTaskRepository.listTaskSummaries();
+  const repository = getTaskRepository();
+  const tasks = await repository.listTaskSummaries();
 
   return (
     <InteractiveTaskInbox
       tasks={tasks}
-      scenarioLabel={taskInboxFoundationScenario.label}
-      openTaskCount={taskInboxFoundationScenario.openTaskCount}
+      scenarioLabel={repository.source === "api" ? "API-backed demo data" : "Static demo data"}
+      openTaskCount={tasks.length}
     />
   );
 }

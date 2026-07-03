@@ -40,6 +40,8 @@ def test_openapi_exposes_health_contracts() -> None:
     paths = response.json()["paths"]
     assert "/api/health/live" in paths
     assert "/api/health/ready" in paths
+    assert "/api/tasks" in paths
+    assert "/api/tasks/{task_id}" in paths
 
 
 def test_invalid_correlation_id_is_replaced() -> None:
