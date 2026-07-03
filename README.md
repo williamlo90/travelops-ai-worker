@@ -4,10 +4,12 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 ## Current status
 
-Frontend Sprint 7 is implemented and verified. Backend Sprint 2 now provides PostgreSQL-backed
-durable Task, Request, AgentRun, and AuditEvent state, reversible migrations, optimistic concurrency,
-atomic audit transitions, and database-aware readiness. Frontend API integration, real
-models/providers, authentication, production telemetry, and external actions remain unimplemented.
+Frontend Sprint 7 and Backend Sprint 2 are complete. Backend Sprint 3 now provides an OCI development
+stack verified end-to-end with Docker Compose, including frontend, FastAPI, PostgreSQL/pgvector,
+migration, seed, healthchecks, and restart persistence. Podman is installed but runtime verification
+is blocked by the current host WSL cgroups configuration; this limitation is recorded rather than
+presented as passed. Frontend API integration, real models/providers, authentication, production
+telemetry, and external actions remain unimplemented.
 
 ## Start the frontend
 
@@ -18,6 +20,17 @@ pnpm dev
 ```
 
 Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.1:3000/evidence` for Technical Evidence.
+
+## Start the development stack
+
+Docker-verified command:
+
+```powershell
+docker compose -f compose.dev.yaml up --build
+```
+
+See [development containers](./docs/development/CONTAINERS.md) for Podman commands, smoke testing,
+data lifecycle, and the current host limitation.
 
 ## Source of truth
 
@@ -42,6 +55,7 @@ Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.
 - [Backend Sprint 0 evidence](./docs/evidence/backend-sprint-00/README.md)
 - [Backend Sprint 1 evidence](./docs/evidence/backend-sprint-01/README.md)
 - [Backend Sprint 2 evidence](./docs/evidence/backend-sprint-02/README.md)
+- [Backend Sprint 3 evidence](./docs/evidence/backend-sprint-03/README.md)
 - [Database migration runbook](./docs/runbooks/DATABASE_MIGRATIONS.md)
 
 ## Verification

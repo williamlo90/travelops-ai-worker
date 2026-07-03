@@ -1,0 +1,87 @@
+name: travelops-dev
+
+services:
+  postgres:
+    image: pgvector/pgvector:pg16
+    environment:
+      POSTGRES_USER: ${TRAVELOPS_POSTGRES_USER:-travelops}
+      POSTGRES_PASSWORD: ${TRAVELOPS_POSTGRES_PASSWORD:-travelops}
+      POSTGRES_DB: ${TRAVELOPS_POSTGRES_DB:-travelops}
+    ports:
+      - "127.0.0.1:5432:5432"
+    volumes:
+      - travelops-postgres-data:/var/lib/postgresql/data
+    healthcheck:
+      test:
+        [
+          "CMD-SHELL",
+          "pg_isready -U ${TRAVELOPS_POSTGRES_USER:-travelops} -d ${TRAVELOPS_POSTGRES_DB:-travelops}",
+        ]
+      interval: 2s
+      timeout: 3s
+      retries: 20
+    restart: unless-stopped
+
+  api:
+    build:
+      context: ./backend
+      dockerfile: Containerfile
+    environment:
+      TRAVELOPS_ENVIRONMENT: development
+      TRAVELOPS_DATABASE_URL: postgresql+psycopg://${TRAVELOPS_POSTGRES_USER:-travelops}:${TRAVELOPS_POSTGRES_PASSWORD:-travelops}@postgres:5432/${TRAVELOPS_POSTGRES_DB:-travelops}
+      TRAVELOPS_DEV_MIGRATE: "true"
+      TRAVELOPS_DEV_SEED: "true"
+    ports:
+      - "127.0.0.1:${TRAVELOPS_API_PORT:-8000}:8000"
+    volumes:
+      - ./backend/app:/app/app
+      - ./backend/migrations:/app/migrations
+      - ./backend/scripts:/app/scripts
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/api/health/ready', timeout=2)",
+        ]
+      interval: 3s
+      timeout: 3s
+      retries: 20
+      start_period: 5s
+    restart: unless-stopped
+
+  frontend:
+    build:
+      context: ./frontend
+      dockerfile: Containerfile
+    environment:
+      NEXT_PUBLIC_API_BASE_URL: http://127.0.0.1:${TRAVELOPS_API_PORT:-8000}
+      NEXT_TELEMETRY_DISABLED: "1"
+    ports:
+      - "127.0.0.1:${TRAVELOPS_FRONTEND_PORT:-3000}:3000"
+    volumes:
+      - ./frontend/src:/app/src
+      - ./frontend/public:/app/public
+    depends_on:
+      api:
+        condition: service_healthy
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "node",
+          "-e",
+          "fetch('http://127.0.0.1:3000/tasks').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))",
+        ]
+      interval: 3s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+    restart: unless-stopped
+
+volumes:
+  travelops-postgres-data:

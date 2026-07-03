@@ -1,0 +1,31 @@
+FROM ghcr.io/astral-sh/uv:0.11.26 AS uv
+
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    UV_LINK_MODE=copy
+
+RUN groupadd --system --gid 10001 travelops \
+    && useradd --system --uid 10001 --gid travelops --create-home travelops
+
+WORKDIR /app
+
+COPY --from=uv /uv /uvx /usr/local/bin/
+COPY pyproject.toml uv.lock README.md ./
+RUN uv sync --frozen --no-install-project
+
+COPY --chown=travelops:travelops app ./app
+COPY --chown=travelops:travelops migrations ./migrations
+COPY --chown=travelops:travelops scripts ./scripts
+COPY --chown=travelops:travelops alembic.ini ./
+COPY --chown=travelops:travelops container-entrypoint.sh ./
+RUN chmod +x container-entrypoint.sh \
+    && uv sync --frozen
+
+USER travelops
+
+EXPOSE 8000
+
+ENTRYPOINT ["./container-entrypoint.sh"]
+CMD ["uv", "run", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--reload"]
