@@ -9,3 +9,4 @@ def test_application_lifespan_boots() -> None:
 
     with TestClient(app) as client:
         assert client.get("/api/health/live").status_code == 200
+        assert client.get("/api/health/ready").status_code == 503

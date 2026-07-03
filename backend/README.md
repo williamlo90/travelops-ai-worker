@@ -33,6 +33,37 @@ python -m uv run mypy app tests
 python -m uv run pytest
 ```
 
+PostgreSQL integration tests require a separate test database:
+
+```powershell
+$env:TEST_DATABASE_URL = "postgresql+psycopg://travelops:travelops@127.0.0.1:55432/travelops_test"
+python -m uv run pytest
+Remove-Item Env:TEST_DATABASE_URL
+```
+
 Readiness intentionally reports PostgreSQL as `not_configured`. Database persistence begins only
-after Backend Sprint 2 is approved. Redis, LangGraph, provider tools, and Compose are also out of the
-current runtime.
+without `TRAVELOPS_DATABASE_URL`. With a configured and reachable PostgreSQL database it reports
+`healthy`; an unavailable required database returns `503`.
+
+## Database migration
+
+Set `TRAVELOPS_DATABASE_URL`, then run:
+
+```powershell
+python -m uv run alembic upgrade head
+```
+
+Rollback one migration only during a reviewed rollback procedure:
+
+```powershell
+python -m uv run alembic downgrade -1
+```
+
+Seed the deterministic, explicitly labelled demo task:
+
+```powershell
+python -m uv run python scripts/seed_demo.py
+```
+
+The seed is idempotent. Redis, LangGraph, provider tools, and Compose remain outside the current
+runtime.

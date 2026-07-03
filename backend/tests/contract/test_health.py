@@ -1,5 +1,7 @@
+from fastapi import Query
 from fastapi.testclient import TestClient
 
+from app.api.errors import AppError
 from app.config import Settings
 from app.main import create_app
 
@@ -21,10 +23,10 @@ def test_readiness_is_honest_about_unconfigured_database() -> None:
     with make_client() as client:
         response = client.get("/api/health/ready", headers={"X-Correlation-ID": "corr_contract"})
 
-    assert response.status_code == 200
+    assert response.status_code == 503
     assert response.headers["X-Correlation-ID"] == "corr_contract"
     assert response.json() == {
-        "status": "ready",
+        "status": "not_ready",
         "service": "travelops-api",
         "dependencies": {"database": {"status": "not_configured"}},
     }
@@ -87,3 +89,48 @@ def test_unexpected_error_is_redacted_and_correlated() -> None:
         }
     }
     assert "sensitive internal detail" not in response.text
+
+
+def test_application_error_uses_standard_envelope() -> None:
+    app = create_app(Settings(environment="test", _env_file=None))
+
+    @app.get("/api/test-only/conflict")
+    async def conflict() -> None:
+        raise AppError(
+            code="version_conflict",
+            message="The record changed.",
+            status_code=409,
+            details={"expected_version": 1},
+        )
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/api/test-only/conflict", headers={"X-Correlation-ID": "corr_conflict"}
+        )
+
+    assert response.status_code == 409
+    assert response.json()["error"] == {
+        "code": "version_conflict",
+        "message": "The record changed.",
+        "correlation_id": "corr_conflict",
+        "details": {"expected_version": 1},
+    }
+
+
+def test_request_validation_uses_standard_envelope() -> None:
+    app = create_app(Settings(environment="test", _env_file=None))
+
+    @app.get("/api/test-only/validated")
+    async def validated(limit: int = Query(ge=1, le=10)) -> dict[str, int]:
+        return {"limit": limit}
+
+    with TestClient(app) as client:
+        response = client.get(
+            "/api/test-only/validated?limit=0",
+            headers={"X-Correlation-ID": "corr_validation"},
+        )
+
+    assert response.status_code == 422
+    assert response.json()["error"]["code"] == "request_validation_failed"
+    assert response.json()["error"]["correlation_id"] == "corr_validation"
+    assert response.json()["error"]["details"][0]["location"] == ["query", "limit"]

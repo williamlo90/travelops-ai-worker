@@ -4,10 +4,10 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 ## Current status
 
-Frontend Sprint 7 is implemented and verified. Backend Sprint 1 now provides a tested FastAPI
-foundation with validated configuration, health contracts, structured logs, correlation IDs, and
-safe error envelopes. Persistence, real models/providers, authentication, production telemetry, and
-external actions remain unimplemented.
+Frontend Sprint 7 is implemented and verified. Backend Sprint 2 now provides PostgreSQL-backed
+durable Task, Request, AgentRun, and AuditEvent state, reversible migrations, optimistic concurrency,
+atomic audit transitions, and database-aware readiness. Frontend API integration, real
+models/providers, authentication, production telemetry, and external actions remain unimplemented.
 
 ## Start the frontend
 
@@ -41,6 +41,8 @@ Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.
 - [Sprint 7 evidence](./docs/evidence/sprint-7/SPRINT_7_REVIEW.md)
 - [Backend Sprint 0 evidence](./docs/evidence/backend-sprint-00/README.md)
 - [Backend Sprint 1 evidence](./docs/evidence/backend-sprint-01/README.md)
+- [Backend Sprint 2 evidence](./docs/evidence/backend-sprint-02/README.md)
+- [Database migration runbook](./docs/runbooks/DATABASE_MIGRATIONS.md)
 
 ## Verification
 
