@@ -4,10 +4,10 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 ## Current status
 
-Frontend Sprint 7 is implemented and verified. Backend Sprint 0 now defines the delivery contract,
-workflow semantics, API conventions, frontend migration boundary, and architecture decisions. No
-backend runtime exists yet: there is still no real model, provider, persistence, authentication,
-production telemetry, or external action.
+Frontend Sprint 7 is implemented and verified. Backend Sprint 1 now provides a tested FastAPI
+foundation with validated configuration, health contracts, structured logs, correlation IDs, and
+safe error envelopes. Persistence, real models/providers, authentication, production telemetry, and
+external actions remain unimplemented.
 
 ## Start the frontend
 
@@ -40,6 +40,7 @@ Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.
 - [Sprint 6 evidence](./docs/evidence/sprint-6/SPRINT_6_REVIEW.md)
 - [Sprint 7 evidence](./docs/evidence/sprint-7/SPRINT_7_REVIEW.md)
 - [Backend Sprint 0 evidence](./docs/evidence/backend-sprint-00/README.md)
+- [Backend Sprint 1 evidence](./docs/evidence/backend-sprint-01/README.md)
 
 ## Verification
 
