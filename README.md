@@ -4,7 +4,10 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 ## Current status
 
-Sprint 7 — Technical Evidence is implemented and verified, completing the approved frontend sprint sequence. The application now exposes a versioned deterministic evaluation dataset, computed results, run and recovery evidence, failure tests, architecture proof, and explicit evidence gaps. This remains a frontend-only demonstration: no real model, provider, backend workflow, persistence, authentication, production telemetry, or external action is present.
+Frontend Sprint 7 is implemented and verified. Backend Sprint 0 now defines the delivery contract,
+workflow semantics, API conventions, frontend migration boundary, and architecture decisions. No
+backend runtime exists yet: there is still no real model, provider, persistence, authentication,
+production telemetry, or external action.
 
 ## Start the frontend
 
@@ -21,6 +24,8 @@ Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.
 - [Product blueprint](./BLUEPRINT.md)
 - [Implementation plan](./IMPLEMENTATION_PLAN.md)
 - [Backend and platform delivery roadmap](./BACKEND_PLATFORM_DELIVERY_ROADMAP.md)
+- [Backend delivery contract](./docs/backend/DELIVERY_CONTRACT.md)
+- [API conventions](./docs/api/CONVENTIONS.md)
 - [Engineering conventions](./ENGINEERING_CONVENTIONS.md)
 - [Product UX Architecture](./design-research/PRODUCT_UX_ARCHITECTURE.md)
 - [UI/UX Design Bible](./design-research/ENTERPRISE_AGENTIC_WORKFLOW_UI_UX_DESIGN_BIBLE.md)
@@ -34,6 +39,7 @@ Open `http://127.0.0.1:3000/tasks` for the operator workflow or `http://127.0.0.
 - [Sprint 5 evidence](./docs/evidence/sprint-5/SPRINT_5_REVIEW.md)
 - [Sprint 6 evidence](./docs/evidence/sprint-6/SPRINT_6_REVIEW.md)
 - [Sprint 7 evidence](./docs/evidence/sprint-7/SPRINT_7_REVIEW.md)
+- [Backend Sprint 0 evidence](./docs/evidence/backend-sprint-00/README.md)
 
 ## Verification
 
