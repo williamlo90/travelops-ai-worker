@@ -1,0 +1,49 @@
+About the job
+Reporting to the Business Performance Manager, you will be responsible for engineering and operationalizing ATI Business Group's Agentic AI capabilities to accelerate intelligent automation, improve decision support, and enable AI systems to take structured actions across enterprise workflows.
+
+Your primary objective is to design, build, and maintain production-grade AI agent systems that can reason, use tools, retrieve contextual knowledge, and execute multi-step workflows securely and reliably. This includes integrating large language models (LLMs), MoE models, embedding models, and visual models with enterprise systems, implementing orchestration frameworks, enforcing governance and observability, and driving continuous improvement in AI performance, efficiency, and security across the organization.
+
+Key Responsibilities
+
+You will design, build, and maintain Agentic AI systems that integrate LLMs with tools, APIs, databases, and enterprise workflows to enable intelligent automation and action-driven AI execution
+You will build and optimize AI agents capable of multi-step reasoning, tool usage, and workflow execution across business processes
+You will develop and maintain orchestration frameworks such as LangGraph, LangChain, PydanticAI, MCP, OpenClaw, OpenCode, or similar technologies for scalable agent operations
+You will build and optimize RAG pipelines, embeddings, prompt structures, and contextual retrieval logic to improve response quality and execution reliability
+You will work with LLM models, MoE models, embedding models, and visual models based on enterprise use case needs
+You will engineer backend services, APIs, and integrations using Python, Node.js, and JavaScript so AI agents can interact with internal systems, databases, and workflow tools
+You will automate Agentic AI workflows using platforms such as n8n or similar tools, with clear retry, fallback, and exception-handling logic
+You will deploy and operationalize AI agents using Docker/Podman, CI/CD pipelines, and production-ready serving environments
+You will monitor model and workflow performance using observability, logging, and auditability controls to ensure safe and reliable operations
+You will collaborate closely with Data, Platform, DevOps, and Business teams to translate requirements into production-ready Agentic AI solutions
+You will maintain high-quality technical documentation for architecture, prompts, tool integration, deployment, and operational procedures
+
+
+
+
+Is this you?
+
+Excellent communication, collaboration, and documentation skills, with fluency in English
+Bachelor's degree in Computer Science, Artificial Intelligence, Data Science, or a related field
+3+ years of hands-on experience in AI/ML engineering, AI application development, or workflow automation
+Strong proficiency in Python, Node.js, and JavaScript, with proven ability to build backend services, APIs, and production-grade integrations
+Hands-on experience with LLMs, RAG pipelines, prompt engineering, and agent orchestration frameworks
+Experience building Agentic AI workflows that connect models with tools, APIs, databases, or business systems
+Practical experience with LangGraph, LangChain, PydanticAI, MCP, vLLM, OpenClaw, OpenCode, or similar technologies
+Familiarity with LLM models, MoE models, embedding models, and visual models for enterprise AI implementation
+Experience using orchestration tools such as n8n or equivalent automation platforms
+Ability to deploy AI systems in production using containerization and CI/CD pipelines
+Understanding of inference monitoring, model lifecycle, evaluation, observability, and governance
+Exposure to Big Data platforms such as Apache NiFi, Hortonworks/Cloudera, or Apache Ranger
+Familiarity with data lakehouse or distributed data ecosystems supporting analytics and AI workloads
+Experience with vector databases and enterprise retrieval systems
+Familiarity with OpenWebUI, LibreChat, or other enterprise conversational AI interfaces
+Experience with on-prem/private AI architecture, observability tools, and API gateways
+
+
+
+
+Be Part of the ATI Journey
+
+Our aim at ATI Business Group in working with our Clients is to support their continued growth by providing cost-effective technology and talented & scalable people resources on demand. ATI’s singular focus on providing services to the travel and hospitality business communities across the globe has been a remarkably successful one. Since commencing in 2002, we now have over 1,300 employees providing services to our clients worldwide.
+
+We may use artificial intelligence (AI) tools to support parts of the hiring process, such as reviewing applications, analyzing resumes, or assessing responses and identifying potential inconsistencies or verification signals in application materials based on available information. These tools assist our recruitment team but do not replace human judgment. Final hiring decisions are ultimately made by humans. If you would like more information about how your data is processed, please contact us.
