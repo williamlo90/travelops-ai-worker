@@ -1171,6 +1171,7 @@ Security and operations must validate a working system, not decorate an incomple
 - Prompt-injection/tool-misuse threat model.
 - Rate-limit and API-gateway contract.
 - Backup/restore, migration rollback, reconciliation, incident, and deployment runbooks.
+- Optional Supabase managed-PostgreSQL deployment profile using the existing database contract.
 - One n8n inbound-task or escalation flow.
 - Final readiness review with evidence-backed limitations.
 
@@ -1180,6 +1181,7 @@ Security and operations must validate a working system, not decorate an incomple
 backend/app/security/
 infra/gateway/
 infra/n8n/
+infra/deployment/supabase/
 docs/security/THREAT_MODEL.md
 docs/runbooks/
 docs/production/READINESS_REVIEW.md
@@ -1189,6 +1191,9 @@ docs/production/READINESS_REVIEW.md
 
 - Actor/organization fields if not already present.
 - Authorization/audit indexes.
+- Optional Supabase profile must use ordinary PostgreSQL migrations, SSL, secret injection, connection
+  pooling, readiness checks, and backup/restore rehearsal without introducing Supabase-specific
+  domain models.
 - No custom identity database unless the selected local identity profile requires minimal configuration.
 
 ### 6. API endpoints
@@ -1203,6 +1208,8 @@ docs/production/READINESS_REVIEW.md
 - Rate-limit/gateway contract.
 - Backup/restore rehearsal.
 - Migration rollback rehearsal.
+- If the optional Supabase profile is selected: migration, pgvector capability, pooled connection,
+  readiness, and backup/restore checks against that managed database.
 - Full Compose E2E with authenticated user roles.
 - Final failure/recovery regression suite.
 
@@ -1213,6 +1220,9 @@ docs/production/READINESS_REVIEW.md
 - Retrieved policy cannot inject tool instructions.
 - Secrets and sensitive fields are redacted.
 - Runbooks match actual commands.
+- Local PostgreSQL remains the reproducible development baseline; Supabase is labelled an optional
+  managed deployment target.
+- Supabase credentials never enter source control, logs, screenshots, or generated evidence.
 - Readiness review clearly separates local production-shaped proof from deployed production operation.
 
 ### 9. Definition of done
@@ -1227,6 +1237,8 @@ gaps are explicit enough for a reviewer to assess.
 - No on-prem cluster.
 - No NiFi/lakehouse deployment.
 - No claim of production traffic.
+- No Supabase Auth, generated REST API, Storage, Edge Functions, or provider-specific business logic
+  unless a separately approved requirement proves they are necessary.
 
 ### 11. Risks
 
