@@ -1,7 +1,7 @@
 # Backend Sprint 3 Review
 
-Status: Docker engineering verification passed; Podman runtime acceptance blocked by host WSL
-cgroups configuration. Sprint 3 is not claimed fully complete.
+Status: Engineering review complete; Docker Compose accepted as the verified development runtime.
+Awaiting human approval for Backend Sprint 4.
 
 ## Goal
 
@@ -69,8 +69,8 @@ Cgroups v1 not supported
 ```
 
 Changing the user's global WSL configuration and restarting every WSL distribution may resolve the
-cgroups requirement, but that would also affect Docker Desktop. It was not performed without explicit
-approval.
+cgroups requirement, but that would also affect Docker Desktop. The user accepted Docker Compose as
+the verified development runtime, so this host change is no longer a Sprint 3 acceptance requirement.
 
 ## Decisions and trade-offs
 
@@ -95,15 +95,13 @@ approval.
 ## Known limitations
 
 - Podman is installed but its machine is not operational on the current cgroups configuration.
-- Docker Desktop is currently the only runtime with executed end-to-end evidence.
+- Docker Compose is the accepted runtime and the only runtime with executed end-to-end evidence.
 - Frontend still uses its mock repository until Backend Sprint 4.
 - Development credentials must never be reused for deployment.
 
 ## Review verdict
 
-The OCI development environment is fully executable and verified with Docker Compose. The explicit
-Podman acceptance criterion remains open, so Backend Sprint 4 must not begin unless the user either:
-
-1. authorizes a global WSL cgroups change and Podman retest; or
-2. accepts Docker Compose as the verified local runtime while retaining OCI/Podman portability as a
-   documented compatibility target.
+The OCI development environment is fully executable and verified with Docker Compose. The user
+accepted Docker Compose as the local runtime while retaining OCI/Podman portability as a documented
+compatibility target. Backend Sprint 3 meets its revised Definition of Done; Backend Sprint 4 remains
+subject to the normal human approval gate.

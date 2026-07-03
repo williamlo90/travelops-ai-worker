@@ -38,8 +38,8 @@ FastAPI serves the API. PostgreSQL is the source of durable business state. Lang
 explicit workflow transitions. Redis carries background execution work but does not become the
 source of truth. The provider simulator supplies deterministic external behavior. The frontend
 integrates through versioned API contracts. OCI-compatible Containerfiles and Compose Specification
-are used from early development; Podman Compose is the primary local command and Docker Compose
-remains a compatibility target.
+are used from early development; Docker Compose is the verified local command and Podman remains an
+OCI compatibility target.
 
 The first credible vertical slice ends after Sprint 9. At that point a refund task can move from
 ingestion through evidence-backed proposal, approval, provider execution, postcondition verification,
@@ -65,7 +65,7 @@ and uncertain-outcome reconciliation using persisted state.
 | 0 | Delivery contract | Frozen boundaries, commands, and acceptance scenarios |
 | 1 | Backend foundation | Runnable FastAPI service with configuration and health |
 | 2 | Core domain persistence | Tasks and runs survive restart with concurrency control |
-| 3 | OCI development environment | Podman Compose starts API, frontend, and PostgreSQL consistently |
+| 3 | OCI development environment | Docker Compose starts API, frontend, and PostgreSQL consistently |
 | 4 | Frontend API boundary | Existing Inbox and Workspace read backend data |
 | 5 | Typed tools and provider simulator | Deterministic booking/refund integrations and failures |
 | 6 | Agent orchestration | Durable LangGraph flow reaches a typed proposal |
@@ -336,8 +336,8 @@ as a development contract, not as a production-readiness claim.
 
 - OCI-compatible development Containerfiles for frontend and backend.
 - `compose.dev.yaml` containing only frontend, API, and PostgreSQL/pgvector.
-- Podman Compose as the primary documented local command.
-- Docker Compose compatibility retained and smoke-checked.
+- Docker Compose as the verified and documented local command.
+- Podman portability retained through OCI Containerfiles and the Compose Specification.
 - `.env.example` with safe development defaults.
 - Named PostgreSQL volume, service healthchecks, and explicit migration/seed commands.
 - Source mounts and development reload where they remain reliable.
@@ -365,14 +365,14 @@ No new product endpoints. Existing liveness and readiness endpoints are used by 
 ### 7. Tests required
 
 - Build both application images from a clean cache.
-- Validate the Compose configuration with Podman and Docker-compatible tooling.
+- Validate the Compose configuration and execute it with Docker Compose.
 - Container smoke test for frontend, API readiness, migration, and database access.
 - Restart test proving persisted task data survives.
 
 ### 8. QA checklist
 
-- `podman compose -f compose.dev.yaml up --build` starts all three services.
-- The documented Docker Compose equivalent remains usable.
+- `docker compose -f compose.dev.yaml up --build` starts all three services.
+- The same OCI images and Compose contract remain suitable for later Podman verification.
 - No secret is embedded in an image or committed environment file.
 - Frontend calls the containerized API through a documented URL.
 - Healthchecks represent process and dependency readiness honestly.
@@ -381,8 +381,8 @@ No new product endpoints. Existing liveness and readiness endpoints are used by 
 ### 9. Definition of done
 
 A reviewer can follow the fresh-clone instructions and reach the frontend backed by FastAPI and
-PostgreSQL through one Podman Compose command. The same Compose specification remains portable to
-Docker Compose.
+PostgreSQL through one Docker Compose command. The same OCI/Compose artifacts remain portable to
+Podman without making unverified runtime claims.
 
 ### 10. Explicitly not in this sprint
 
@@ -1116,7 +1116,8 @@ No new product endpoints. Compose healthchecks use liveness/readiness.
 - CI: migration from empty database.
 - Scan: dependency, secret, and image checks.
 - Shutdown/restart: durable state remains.
-- Runtime compatibility: release images run under Podman and remain OCI-compatible.
+- Runtime compatibility: release images remain OCI-compatible and are checked against available
+  Docker/Podman runtimes.
 
 ### 8. QA checklist
 
@@ -1129,8 +1130,8 @@ No new product endpoints. Compose healthchecks use liveness/readiness.
 ### 9. Definition of done
 
 CI builds tagged OCI images, executes critical gates and a clean Compose smoke test, and publishes a
-reviewable release evidence summary. Podman remains the primary documented runtime while the images
-and Compose contract remain Docker-compatible.
+reviewable release evidence summary. Docker Compose remains the verified development runtime while
+the images and Compose contract remain OCI/Podman-compatible.
 
 ### 10. Explicitly not in this sprint
 

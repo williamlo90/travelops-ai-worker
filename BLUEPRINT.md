@@ -137,7 +137,7 @@ PostgreSQL + pgvector  Redis worker     Provider simulator
 | Model access | Provider-neutral model gateway |
 | Local/private inference | Optional vLLM-compatible profile |
 | Observability | OpenTelemetry traces, metrics, structured logs |
-| Packaging | OCI Containerfiles and Compose Specification; Podman primary, Docker compatible |
+| Packaging | OCI Containerfiles and Compose Specification; Docker Compose verified, Podman compatible |
 | CI | GitHub Actions |
 | Tests | Pytest, Vitest, Playwright |
 
@@ -456,8 +456,8 @@ Every metric links to underlying cases. Failed cases state impact, safety dispos
 ## 18. Deployment and operations
 
 Containerization begins early as a development contract. The first Compose environment contains only
-frontend, API, and PostgreSQL/pgvector. Podman Compose is the primary documented local command;
-Containerfiles and Compose configuration remain OCI/Docker-compatible.
+frontend, API, and PostgreSQL/pgvector. Docker Compose is the verified local runtime; Containerfiles
+and Compose configuration remain OCI-compatible and portable to Podman.
 
 The production-packaging phase later extends the proven environment with:
 
@@ -581,8 +581,8 @@ One n8n workflow plus documented MCP, gateway, and enterprise-data integration b
 
 The flagship repository is complete only when:
 
-1. A fresh clone starts through the documented Podman Compose command, with Docker Compose
-   compatibility retained.
+1. A fresh clone starts through the documented Docker Compose command, with OCI/Podman portability
+   retained.
 2. A refund request completes through real backend orchestration.
 3. Policy evidence is retrieved from a versioned vector index and cited.
 4. High-risk execution is blocked until valid approval.

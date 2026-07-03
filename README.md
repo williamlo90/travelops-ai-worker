@@ -6,10 +6,9 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 Frontend Sprint 7 and Backend Sprint 2 are complete. Backend Sprint 3 now provides an OCI development
 stack verified end-to-end with Docker Compose, including frontend, FastAPI, PostgreSQL/pgvector,
-migration, seed, healthchecks, and restart persistence. Podman is installed but runtime verification
-is blocked by the current host WSL cgroups configuration; this limitation is recorded rather than
-presented as passed. Frontend API integration, real models/providers, authentication, production
-telemetry, and external actions remain unimplemented.
+migration, seed, healthchecks, and restart persistence. Docker Compose is the accepted development
+runtime; OCI/Podman portability remains a compatibility target. Frontend API integration, real
+models/providers, authentication, production telemetry, and external actions remain unimplemented.
 
 ## Start the frontend
 
@@ -29,8 +28,8 @@ Docker-verified command:
 docker compose -f compose.dev.yaml up --build
 ```
 
-See [development containers](./docs/development/CONTAINERS.md) for Podman commands, smoke testing,
-data lifecycle, and the current host limitation.
+See [development containers](./docs/development/CONTAINERS.md) for smoke testing, data lifecycle, and
+the optional Podman compatibility notes.
 
 ## Source of truth
 

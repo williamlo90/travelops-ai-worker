@@ -8,10 +8,16 @@ The development stack contains exactly three services:
 frontend → api → postgres/pgvector
 ```
 
-Podman is the primary documented runtime. The same OCI Containerfiles and Compose Specification are
-also verified with Docker Compose.
+Docker Compose is the verified development runtime. The Containerfiles and Compose Specification
+remain OCI-compatible so Podman can be verified later without changing the application architecture.
 
-## Start with Podman
+## Start with Docker Compose
+
+```powershell
+docker compose -f compose.dev.yaml up --build
+```
+
+## Optional Podman compatibility
 
 Podman on Windows requires its WSL2-backed machine:
 
@@ -21,9 +27,9 @@ podman machine start
 podman compose -f compose.dev.yaml up --build
 ```
 
-On the current development workstation, Podman machine startup remains blocked by the host WSL
-cgroups configuration. Docker Compose is the executed runtime evidence until that host-level decision
-is resolved; see the Backend Sprint 3 review.
+On the current development workstation, Podman machine startup is blocked by the host WSL cgroups
+configuration. The project does not require that host change: Docker Compose is the accepted runtime
+and Podman remains an optional portability check.
 
 Open:
 
@@ -31,12 +37,6 @@ Open:
 http://127.0.0.1:3000/tasks
 http://127.0.0.1:8000/docs
 http://127.0.0.1:8000/api/health/ready
-```
-
-## Docker-compatible command
-
-```powershell
-docker compose -f compose.dev.yaml up --build
 ```
 
 ## What startup does
@@ -75,16 +75,16 @@ the stack, and confirms `RF-1042` remains in PostgreSQL.
 Preserve development data:
 
 ```powershell
-podman compose -f compose.dev.yaml down
+docker compose -f compose.dev.yaml down
 ```
 
 Delete development data only when deliberately resetting the demo:
 
 ```powershell
-podman compose -f compose.dev.yaml down --volumes
+docker compose -f compose.dev.yaml down --volumes
 ```
 
-Use the equivalent `docker compose` commands when Docker is the selected runtime.
+Use equivalent `podman compose` commands only when Podman is available and verified on the host.
 
 ## Boundaries
 
