@@ -1,5 +1,6 @@
 from pydantic import BaseModel, Field
 
+from app.domain.policies import PolicyDocumentVersionRecord, RetrievalEvidenceRecord
 from app.domain.proposals import ProposalVersionRecord
 from app.domain.runs import AgentRunRecord
 
@@ -19,3 +20,11 @@ class ProposalResponse(BaseModel):
 class OrchestrationResponse(BaseModel):
     run: AgentRunRecord
     proposal: ProposalVersionRecord
+
+
+class EvidenceResponse(BaseModel):
+    items: list[RetrievalEvidenceRecord]
+
+
+class PolicyVersionResponse(BaseModel):
+    data: PolicyDocumentVersionRecord

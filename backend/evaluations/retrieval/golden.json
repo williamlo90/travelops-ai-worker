@@ -1,0 +1,14 @@
+[
+  {
+    "query": "carrier cancelled flight full refund original payment method",
+    "carrier": "British Airways",
+    "jurisdiction": "SG",
+    "relevant_clause": "4.2"
+  },
+  {
+    "query": "voluntary cancellation fare fee",
+    "carrier": "British Airways",
+    "jurisdiction": "SG",
+    "relevant_clause": "4.3"
+  }
+]

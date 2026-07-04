@@ -1,6 +1,6 @@
 # TravelOps Backend
 
-Status: Backend Sprint 6 durable agent orchestration implemented.
+Status: Backend Sprint 7 versioned policy RAG and evidence implemented.
 
 The backend will be a Python 3.12 FastAPI modular monolith. PostgreSQL owns durable business and
 workflow state. Redis will be introduced only when asynchronous execution requires it.
@@ -56,6 +56,7 @@ Set `TRAVELOPS_DATABASE_URL`, then run:
 ```powershell
 python -m uv run alembic upgrade head
 python -m uv run python scripts/setup_checkpoints.py
+python -m uv run python scripts/ingest_policies.py
 ```
 
 Rollback one migration only during a reviewed rollback procedure:
@@ -80,5 +81,6 @@ Invoke-RestMethod -Method Post `
 ```
 
 Provider tools remain internal application contracts; no public simulator mutation endpoint is
-exposed. Redis, live policy retrieval, approval mutation, and real provider credentials remain
-outside the current runtime.
+exposed. The deterministic hash embedding is a reproducible local baseline, not a claim of semantic
+quality at production scale. Redis, approval mutation, real embedding/model providers, and real
+provider credentials remain outside the current runtime.

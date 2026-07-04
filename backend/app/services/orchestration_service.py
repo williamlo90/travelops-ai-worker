@@ -1,5 +1,6 @@
+from datetime import UTC, datetime
 from typing import cast
-from uuid import uuid4
+from uuid import UUID, uuid4
 
 from langgraph.checkpoint.postgres import PostgresSaver
 
@@ -17,6 +18,7 @@ from app.persistence.checkpoints import checkpoint_connection_string
 from app.persistence.database import Database
 from app.persistence.orchestration_repositories import OrchestrationRepository
 from app.persistence.repositories import RunRepository
+from app.retrieval.retriever import PolicyRetriever
 from app.services.run_service import RunService
 
 
@@ -116,6 +118,24 @@ class OrchestrationService:
             )
             refreshed_run = RunRepository(session).get_by_public_id(run.public_id)
         assert refreshed_run is not None
+        evidence = PolicyRetriever(self.database).retrieve_and_bind(
+            proposal_id=proposal.id,
+            query="carrier cancelled flight full refund original payment method",
+            carrier=context.provider,
+            product="flight",
+            jurisdiction=context.customer_locale.split("-")[-1],
+            as_of=datetime.now(UTC).date(),
+        )
+        if evidence:
+            refreshed_run = RunService(self.database).transition(
+                public_id=refreshed_run.public_id,
+                expected_version=refreshed_run.version,
+                target=RunStatus.WAITING_APPROVAL,
+            )
+            with self.database.session() as session:
+                current = OrchestrationRepository(session).get_proposal_for_run(run.id)
+            assert current is not None
+            proposal = current
         return OrchestrationResult(run=refreshed_run, proposal=proposal)
 
     def get_run(self, public_id: str) -> AgentRunRecord | None:
@@ -127,6 +147,10 @@ class OrchestrationService:
             return OrchestrationRepository(session).get_proposal(
                 task_public_id=task_public_id, version=version
             )
+
+    def get_proposal_for_run(self, run_id: UUID) -> ProposalVersionRecord | None:
+        with self.database.session() as session:
+            return OrchestrationRepository(session).get_proposal_for_run(run_id)
 
     def _checkpoint_connection_string(self) -> str:
         return checkpoint_connection_string(

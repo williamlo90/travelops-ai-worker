@@ -1,5 +1,6 @@
 import os
 from collections.abc import Iterator
+from pathlib import Path
 
 import pytest
 from alembic import command
@@ -8,6 +9,7 @@ from sqlalchemy import text
 
 from app.persistence.checkpoints import setup_checkpoint_schema
 from app.persistence.database import Database
+from app.retrieval.ingest import ingest_policy
 
 
 @pytest.fixture(scope="session")
@@ -40,8 +42,15 @@ def database(test_database_url: str, migrated_database: None) -> Iterator[Databa
     database = Database(test_database_url)
     with database.session() as session:
         session.execute(
-            text("TRUNCATE audit_events, agent_runs, requests, tasks RESTART IDENTITY CASCADE")
+            text(
+                "TRUNCATE policy_document_versions, audit_events, agent_runs, requests, tasks "
+                "RESTART IDENTITY CASCADE"
+            )
         )
+    ingest_policy(
+        database,
+        Path(__file__).resolve().parents[2] / "policies" / "source" / "refund-policy-v1.json",
+    )
     try:
         yield database
     finally:

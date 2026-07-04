@@ -1,8 +1,9 @@
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime
 from decimal import Decimal
 from typing import Any
 from uuid import UUID, uuid4
 
+from pgvector.sqlalchemy import VECTOR
 from sqlalchemy import (
     CheckConstraint,
     DateTime,
@@ -271,7 +272,7 @@ class ProposalVersionModel(Base):
         UniqueConstraint("run_id", name="uq_proposal_versions_run_id"),
         CheckConstraint("version > 0", name="ck_proposal_versions_version_positive"),
         CheckConstraint(
-            "status = 'draft_waiting_evidence'",
+            "status IN ('draft_waiting_evidence', 'waiting_approval')",
             name="ck_proposal_versions_status",
         ),
     )
@@ -294,6 +295,89 @@ class ProposalVersionModel(Base):
     model_version: Mapped[str] = mapped_column(String(64), nullable=False)
     prompt_version: Mapped[str] = mapped_column(String(64), nullable=False)
     graph_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+
+class PolicyDocumentVersionModel(Base):
+    __tablename__ = "policy_document_versions"
+    __table_args__ = (
+        UniqueConstraint("source_id", "version", name="uq_policy_source_version"),
+        CheckConstraint(
+            "lifecycle_status IN ('active', 'quarantined')",
+            name="ck_policy_lifecycle_status",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    source_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    title: Mapped[str] = mapped_column(String(240), nullable=False)
+    carrier: Mapped[str] = mapped_column(String(120), nullable=False)
+    product: Mapped[str] = mapped_column(String(32), nullable=False)
+    jurisdiction: Mapped[str] = mapped_column(String(16), nullable=False)
+    effective_from: Mapped[date] = mapped_column(nullable=False)
+    effective_to: Mapped[date | None] = mapped_column()
+    lifecycle_status: Mapped[str] = mapped_column(String(16), nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    corpus_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+
+class PolicyChunkModel(Base):
+    __tablename__ = "policy_chunks"
+    __table_args__ = (
+        UniqueConstraint("policy_version_id", "clause", name="uq_policy_chunk_clause"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    policy_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("policy_document_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    clause: Mapped[str] = mapped_column(String(64), nullable=False)
+    text: Mapped[str] = mapped_column(Text, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    chunking_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    index_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding: Mapped[list[float]] = mapped_column(VECTOR(32), nullable=False)
+
+
+class RetrievalEvidenceModel(Base):
+    __tablename__ = "retrieval_evidence"
+    __table_args__ = (
+        UniqueConstraint("proposal_id", "chunk_id", name="uq_evidence_proposal_chunk"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    proposal_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("proposal_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    policy_version_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("policy_document_versions.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    chunk_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("policy_chunks.id", ondelete="RESTRICT"), nullable=False
+    )
+    source_id: Mapped[str] = mapped_column(String(64), nullable=False)
+    clause: Mapped[str] = mapped_column(String(64), nullable=False)
+    excerpt: Mapped[str] = mapped_column(Text, nullable=False)
+    content_hash: Mapped[str] = mapped_column(String(64), nullable=False)
+    effective_from: Mapped[date] = mapped_column(nullable=False)
+    retrieval_score: Mapped[float] = mapped_column(nullable=False)
+    corpus_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    chunking_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    embedding_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    index_version: Mapped[str] = mapped_column(String(64), nullable=False)
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )

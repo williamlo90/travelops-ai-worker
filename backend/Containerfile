@@ -18,6 +18,7 @@ RUN uv sync --frozen --no-install-project
 COPY --chown=travelops:travelops app ./app
 COPY --chown=travelops:travelops migrations ./migrations
 COPY --chown=travelops:travelops scripts ./scripts
+COPY --chown=travelops:travelops policies ./policies
 COPY --chown=travelops:travelops alembic.ini ./
 COPY --chown=travelops:travelops container-entrypoint.sh ./
 RUN chmod +x container-entrypoint.sh \

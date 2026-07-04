@@ -1,0 +1,20 @@
+{
+  "source_id": "POL-REFUND",
+  "version": 1,
+  "title": "TravelOps Refund Policy",
+  "carrier": "British Airways",
+  "product": "flight",
+  "jurisdiction": "SG",
+  "effective_from": "2026-01-01",
+  "effective_to": null,
+  "clauses": [
+    {
+      "clause": "4.2",
+      "text": "A carrier-cancelled unused flight is eligible for a full refund to the original payment method without a cancellation fee."
+    },
+    {
+      "clause": "4.3",
+      "text": "A customer-requested voluntary cancellation may incur the fare cancellation fee and must not use the carrier-cancellation waiver."
+    }
+  ]
+}

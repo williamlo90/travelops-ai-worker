@@ -18,6 +18,9 @@ def test_migration_creates_only_approved_core_tables(database: Database) -> None
         "external_receipts",
         "risk_decisions",
         "proposal_versions",
+        "policy_document_versions",
+        "policy_chunks",
+        "retrieval_evidence",
     } <= tables
     assert "bookings" not in tables
     assert "customers" not in tables

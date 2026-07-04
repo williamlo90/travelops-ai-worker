@@ -9,6 +9,7 @@ from pydantic import BaseModel, ConfigDict, Field
 
 class ProposalStatus(StrEnum):
     DRAFT_WAITING_EVIDENCE = "draft_waiting_evidence"
+    WAITING_APPROVAL = "waiting_approval"
 
 
 class IntentClassification(BaseModel):

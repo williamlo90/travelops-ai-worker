@@ -29,7 +29,9 @@ class OrchestrationContext:
         customer_message: str,
         booking_reference: str,
         booking_status: str,
+        provider: str,
         customer_tier: str,
+        customer_locale: str,
         amount: Decimal,
         currency: str,
     ) -> None:
@@ -37,7 +39,9 @@ class OrchestrationContext:
         self.customer_message = customer_message
         self.booking_reference = booking_reference
         self.booking_status = booking_status
+        self.provider = provider
         self.customer_tier = customer_tier
+        self.customer_locale = customer_locale
         self.amount = amount
         self.currency = currency
 
@@ -62,7 +66,9 @@ class OrchestrationRepository:
             customer_message=request.customer_message,
             booking_reference=booking.reference,
             booking_status=booking.status,
+            provider=booking.provider,
             customer_tier=customer.tier,
+            customer_locale=customer.locale,
             amount=booking.paid_amount,
             currency=booking.currency,
         )

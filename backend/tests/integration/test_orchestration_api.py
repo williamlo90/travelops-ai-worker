@@ -85,9 +85,9 @@ def test_start_resume_and_read_persisted_proposal(
         assert started.status_code == 201
         body = started.json()
         run_id = body["run"]["public_id"]
-        assert body["run"]["status"] == "running"
+        assert body["run"]["status"] == "waiting_approval"
         assert body["run"]["model_provider"] == "deterministic"
-        assert body["proposal"]["status"] == "draft_waiting_evidence"
+        assert body["proposal"]["status"] == "waiting_approval"
         assert body["proposal"]["parameters"]["booking_reference"] == "BA218"
 
         resumed = client.post(
@@ -100,8 +100,17 @@ def test_start_resume_and_read_persisted_proposal(
 
         run_response = client.get(f"/api/agent-runs/{run_id}")
         proposal_response = client.get("/api/tasks/RF-1042/proposals/1")
+        evidence_response = client.get(f"/api/agent-runs/{run_id}/evidence")
+        policy_response = client.get("/api/policies/POL-REFUND/versions/1")
         assert run_response.status_code == 200
         assert proposal_response.status_code == 200
+        assert evidence_response.status_code == 200
+        assert policy_response.status_code == 200
+        assert policy_response.json()["data"]["content_hash"]
+        assert evidence_response.json()["items"][0]["clause"] == "4.2"
+        assert evidence_response.json()["items"][0]["embedding_version"] == (
+            "deterministic-hash-v1"
+        )
         assert proposal_response.json()["data"]["graph_version"] == "refund-graph-v1"
 
     with database.session() as session:
