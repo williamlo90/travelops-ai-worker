@@ -58,6 +58,25 @@ and uncertain-outcome reconciliation using persisted state.
 9. Production claims require generated evidence, not fixture text.
 10. Do not start the next sprint before engineering review, design/operational QA, and human approval.
 
+### Initial non-functional design envelope
+
+These are sizing and test assumptions for architecture decisions, not production-SLA claims:
+
+- Up to 50 concurrent operators and 1,000 refund tasks per day.
+- Up to 200 active policy documents and 10,000 indexed policy chunks in the first deployment profile.
+- Read APIs target p95 below 500 ms and non-execution mutation APIs below 750 ms on the documented
+  reference environment.
+- Warm filtered retrieval targets p95 below 300 ms, measured separately from model generation.
+- Provider/model work is asynchronous when it cannot reliably complete inside the API budget.
+- Acknowledged work survives API/worker restart; externally uncertain writes are reconciled rather
+  than blindly retried.
+- Every consequential transition is auditable and recoverable from PostgreSQL-backed state.
+- Capacity or latency beyond this envelope requires measurement before adding brokers, replicas,
+  distributed caches, or microservices.
+
+Each relevant sprint must record the test environment and observed result. Missing measurement means
+“not yet proven,” not a silent pass.
+
 ## 3. Recommended sprint sequence
 
 | Sprint | Name | Primary outcome |
@@ -100,6 +119,7 @@ against unstable endpoints.
 - API naming, error envelope, correlation ID, version-field, and timestamp conventions.
 - Python, package-manager, migration, test, lint, and format commands.
 - ADR for modular monolith and PostgreSQL-as-source-of-truth.
+- Initial capacity, latency, recoverability, auditability, security, and maintainability assumptions.
 - Frontend-to-backend contract migration plan.
 - Updated Definition of Ready and review gate.
 
@@ -110,6 +130,7 @@ docs/backend/DELIVERY_CONTRACT.md
 docs/adr/000-backend-modular-monolith.md
 docs/adr/001-durable-state-and-redis.md
 docs/api/CONVENTIONS.md
+docs/architecture/NON_FUNCTIONAL_REQUIREMENTS.md
 backend/README.md
 ```
 
@@ -131,6 +152,7 @@ No product tests. Add a documentation/link validation check only if the reposito
 - “Failed” and “uncertain” remain distinct.
 - Frontend field requirements are mapped.
 - No requirement silently implies a microservice.
+- Capacity and performance numbers are labelled design/test assumptions, not production SLAs.
 - Commands work on Windows and CI-oriented Linux shells conceptually.
 
 ### 9. Definition of done
@@ -663,11 +685,21 @@ Policy citations in the frontend must originate from a real retrieval and applic
 ### 3. Exact deliverables
 
 - Policy document schema and ingestion command.
+- Explicit policy-data lifecycle:
+  `raw → validate → normalize → quarantine/reject → extract metadata → version → chunk → embed →
+  index → verify → serve → monitor freshness`.
+- Ingestion manifest and per-stage status with actionable rejection reasons; malformed input never
+  enters the active index.
 - pgvector extension and embedding storage.
 - Embedding adapter through ModelGateway.
 - Metadata for carrier, product, jurisdiction, effective date, and supersession.
 - Retrieval, applicability filtering, conflict/staleness detection.
 - RetrievalEvidence snapshots.
+- Stable chunk identity and content hash, plus corpus, chunking, embedding-model, and index versions.
+- A labelled retrieval benchmark mapping representative queries to relevant policy clauses.
+- Retrieval quality report covering Recall@k, MRR or nDCG, applicability precision, abstention, and
+  latency. Thresholds are versioned configuration, not undocumented claims.
+- Re-index and rollback procedure that preserves evidence already bound to existing proposals.
 - Graph nodes updated to use evidence and refuse/escalate on missing/conflicting policy.
 - Small realistic policy corpus.
 
@@ -675,12 +707,15 @@ Policy citations in the frontend must originate from a real retrieval and applic
 
 ```text
 backend/app/retrieval/ingest.py
+backend/app/retrieval/validation.py
+backend/app/retrieval/normalization.py
 backend/app/retrieval/chunking.py
 backend/app/retrieval/repository.py
 backend/app/retrieval/retriever.py
 backend/app/domain/policies.py
 policies/source/
 policies/manifest.yaml
+evaluations/retrieval/
 backend/tests/retrieval/
 ```
 
@@ -702,7 +737,14 @@ backend/tests/retrieval/
 
 - Unit: metadata applicability and conflict rules.
 - Retrieval: relevant, irrelevant, missing, stale, and conflicting cases.
+- Retrieval benchmark: correct clause in top-k, ranking quality, applicability precision, abstention,
+  and latency budget.
+- Chunking regression: policy headings, exceptions, text-based tables, and cross-clause references
+  remain retrievable without merging unrelated authority.
 - Integration: pgvector query and snapshot persistence.
+- Lifecycle: re-index, rollback, and old evidence snapshot readability.
+- Ingestion: malformed encoding, missing required metadata, duplicate content, invalid effective
+  dates, and embedding/index failures produce deterministic quarantine or retry outcomes.
 - Evaluation: citation validity/applicability.
 - Workflow: evidence affects proposal/routing deterministically.
 
@@ -712,12 +754,22 @@ backend/tests/retrieval/
 - Retrieval score alone never authorizes execution.
 - Missing/conflicting evidence blocks or escalates.
 - Re-ingestion creates a new version.
+- Every policy version has a visible lifecycle state and rejected/quarantined content is never served.
+- A partially failed ingestion cannot expose a partially built policy version.
 - Existing proposal retains original evidence snapshot.
+- Every evidence record exposes chunk ID/hash and corpus, chunking, embedding, and index versions.
+- The benchmark reports Recall@k and one ranking metric by carrier, jurisdiction, effective-date
+  question, and policy-exception question rather than only an aggregate score.
+- Safety-critical applicability precision and citation-to-clause validity are 100% on the initial
+  golden set; other committed thresholds pass without unreviewed regression.
+- Queries with no applicable policy abstain instead of returning the nearest irrelevant chunk.
+- Retrieval latency is measured and stays inside a committed local test budget.
 
 ### 9. Definition of done
 
-The refund proposal cites evidence retrieved from a versioned pgvector index, and negative retrieval
-cases route safely.
+The refund proposal cites exact, versioned evidence retrieved from pgvector; the labelled benchmark
+and negative cases pass committed quality and latency gates; re-indexing does not invalidate evidence
+already attached to a proposal.
 
 ### 10. Explicitly not in this sprint
 
@@ -725,6 +777,10 @@ cases route safely.
 - No hybrid search unless vector-only tests prove insufficient.
 - No external vector database.
 - No policy administration UI.
+- No query rewriting, reranker, or agentic retrieval until benchmark evidence identifies a specific
+  failure that simpler filtered vector search cannot solve.
+- No Redis retrieval cache. Record cache candidates and measurements; implement caching only if a
+  measured latency or provider-cost problem remains after indexing and query fixes.
 
 ### 11. Risks
 
@@ -732,7 +788,10 @@ RAG tuning can become open-ended experimentation.
 
 ### 12. Avoiding overengineering
 
-Use a small corpus and measurable retrieval cases. Add reranking only when a failing case justifies it.
+Use a small, labelled corpus and publish disaggregated results. Tune chunking, filters, or ranking one
+variable at a time. Add reranking only when a failing case justifies its cost and complexity.
+Document cache invalidation requirements—policy version, permissions, corpus/index version, and
+expiry—before any future cache implementation.
 
 ---
 
@@ -832,7 +891,10 @@ This completes the minimum credible vertical slice and proves the hardest distri
 - Redis-backed worker and command enqueue boundary.
 - Persist-before-enqueue/outbox or equivalent reliability pattern selected by ADR.
 - Idempotency key generation and uniqueness enforcement.
-- Bounded retry/backoff matrix.
+- Bounded retry/backoff and recovery matrix per failure boundary: maximum attempts, backoff,
+  retryable conditions, side-effect knowledge, terminal state, and operator action.
+- Exhausted safe retries move to explicit escalation/dead-letter handling with persisted cause; they
+  do not loop indefinitely.
 - ExternalReceipt and PostconditionCheck persistence.
 - Completed only after verified provider state.
 - `failed_no_side_effect`, `execution_uncertain`, `reconciling`, `completed_verified`, and `escalated`.
@@ -878,6 +940,8 @@ frontend/src/data/runs/
 
 - API request does not synchronously perform provider side effect.
 - Retry policy uses side-effect knowledge.
+- Retry and recovery budgets are configuration with deterministic tests, not hidden worker defaults.
+- Exhausted retries remain inspectable and produce one explicit operator action.
 - Uncertain state exposes no blind retry.
 - Reconciliation is idempotent.
 - Prior attempts and receipts remain visible.
@@ -922,6 +986,12 @@ Operational reliability cannot be inferred from UI states or logs without correl
 - OpenTelemetry instrumentation for HTTP, graph nodes, model calls, retrieval, queue work, and tools.
 - Structured redacted logs.
 - Core metrics: run outcome, node/tool duration, queue latency, retries, reconciliation, approval wait.
+- Retrieval spans for embedding, metadata filtering, vector search, evidence selection, and snapshot
+  persistence.
+- Bounded retrieval diagnostics: query fingerprint, applied filters, candidate/selected chunk IDs,
+  rank and score, result count, abstention reason, and corpus/chunking/embedding/index versions.
+- RAG metrics: end-to-end and stage latency, empty/abstained/conflicting result rate, corpus freshness,
+  and benchmark release status.
 - Local collector/exporter profile.
 - Technical Evidence reads generated evaluation/run evidence, not static claims.
 
@@ -950,6 +1020,8 @@ backend/tests/observability/
 - Integration: correlation ID across API, graph, worker, and tool.
 - Audit: required events and append-only behavior.
 - Observability: spans/metrics emitted with bounded attributes.
+- RAG observability: a failed retrieval benchmark case can be traced to filters, candidates, selected
+  evidence, and version metadata without recording raw customer text.
 - Security: no prompts, secrets, or PII in logs.
 
 ### 8. QA checklist
@@ -957,13 +1029,18 @@ backend/tests/observability/
 - Audit and trace are not conflated.
 - Metric labels avoid unbounded task/customer IDs.
 - Error includes impact and side-effect knowledge.
+- Retrieval telemetry distinguishes no candidate, filtered candidate, stale/conflicting evidence,
+  and downstream citation rejection.
+- Raw query, full policy text, embeddings, and customer PII are not emitted as telemetry.
+- Chunk IDs and version fields are bounded or kept in traces/logs, not metric labels.
 - No “healthy” dashboard without live evidence.
 - Telemetry failure does not break business workflow.
 
 ### 9. Definition of done
 
-One run can be followed from HTTP request through graph, approval, worker, tool, and postcondition by
-correlation ID, with redaction tests passing.
+One run can be followed from HTTP request through retrieval, graph, approval, worker, tool, and
+postcondition by correlation ID. A retrieval failure is diagnosable from safe metadata, with
+redaction and bounded-cardinality tests passing.
 
 ### 10. Explicitly not in this sprint
 
@@ -997,6 +1074,12 @@ Static fixtures and self-asserted “actual” values are not credible AI-system
 - Golden dataset stored separately from observed run export.
 - Runner that executes/replays cases and captures observed output.
 - Deterministic evaluators for decision, citation, tool, approval, recovery, and postcondition.
+- Separate retrieval evaluators for Recall@k, MRR or nDCG, applicability precision, abstention, exact
+  citation-to-clause validity, and latency.
+- Dataset slices for carrier, jurisdiction, effective-date lookup, policy exception, ambiguity,
+  missing policy, stale policy, and conflict.
+- Retrieval regression diff showing changed queries, ranks, selected chunks, and corpus/chunking/
+  embedding/index versions.
 - Optional model-assisted rubric only for bounded communication quality; not a safety authority.
 - Failure report with impact, disposition, and next action.
 - Dataset, graph, model, prompt, policy, tool, and release versions.
@@ -1031,6 +1114,8 @@ frontend/src/data/evaluations/
 - Unit: each evaluator.
 - Evaluation: golden/observed separation and missing-output failure.
 - Regression: known failing citation case.
+- Retrieval regression: known missing-clause, wrong-jurisdiction, stale-version, and nearest-but-
+  inapplicable cases.
 - Integration: observed run export and persistence.
 - Contract: Technical Evidence response.
 - Release gate: threshold failure produces non-zero CI exit.
@@ -1041,12 +1126,18 @@ frontend/src/data/evaluations/
 - Failed case remains visible.
 - Pass rate links to cases.
 - Safety evaluator is deterministic.
+- Retrieval and answer/workflow quality are reported separately; a correct final answer cannot hide
+  retrieval of the wrong policy clause.
+- Safety-critical applicability and citation validity require zero failures; aggregate retrieval and
+  latency thresholds are committed in version control and cannot be relaxed silently.
+- Results are reported by dataset slice so a strong aggregate score cannot hide a failing carrier,
+  jurisdiction, or exception path.
 - No local fixture metric described as production performance.
 
 ### 9. Definition of done
 
-CI can execute the refund evaluation suite, fail a known regression, and publish a versioned evidence
-artifact consumed by Technical Evidence.
+CI can execute the refund and retrieval suites, fail known retrieval or workflow regressions, and
+publish a versioned evidence artifact with disaggregated metrics consumed by Technical Evidence.
 
 ### 10. Explicitly not in this sprint
 
@@ -1084,6 +1175,12 @@ development containers.
 - Production-like Compose profile extending the proven development contract with Redis, worker,
   simulator, and optional OTel collector.
 - Release healthchecks, explicit migration job, seed, and smoke-test commands.
+- Documented release order: validate configuration and backup readiness → run compatible migration →
+  start API/worker → pass readiness/smoke checks → enable normal processing.
+- Expand/contract migration policy so the previous and new application versions remain compatible
+  during the local release rehearsal.
+- Failed-release procedure covering worker drain, application rollback, forward-fix versus database
+  rollback decision, and post-rollback verification.
 - Measured image optimization; no arbitrary size target.
 - GitHub Actions for lint, type, unit, integration, evaluation, frontend E2E, image build, and smoke test.
 - Dependency and container vulnerability scanning.
@@ -1098,6 +1195,7 @@ compose.release.yaml
 infra/compose/
 .github/workflows/ci.yml
 scripts/smoke-test.*
+docs/runbooks/RELEASE_AND_ROLLBACK.md
 ```
 
 ### 5. Database/migrations
@@ -1114,6 +1212,10 @@ No new product endpoints. Compose healthchecks use liveness/readiness.
 - Container smoke: clean release build, migration, seed, API readiness.
 - E2E: flagship happy and uncertain paths in Compose.
 - CI: migration from empty database.
+- Release rehearsal: upgrade from the previous schema/application artifact and exercise the documented
+  application rollback path without data loss.
+- Compatibility: previous application artifact can operate during the expand phase; destructive
+  contract migrations require a later reviewed release.
 - Scan: dependency, secret, and image checks.
 - Shutdown/restart: durable state remains.
 - Runtime compatibility: release images remain OCI-compatible and are checked against available
@@ -1126,12 +1228,16 @@ No new product endpoints. Compose healthchecks use liveness/readiness.
 - Healthchecks reflect dependencies correctly.
 - Images run as non-root where practical.
 - CI caches do not hide missing dependency declarations.
+- API and worker are never responsible for racing each other to run migrations.
+- Workers stop accepting new jobs and finish or safely release in-flight work before rollback.
+- Rollback instructions distinguish application rollback from unsafe database downgrade.
 
 ### 9. Definition of done
 
-CI builds tagged OCI images, executes critical gates and a clean Compose smoke test, and publishes a
-reviewable release evidence summary. Docker Compose remains the verified development runtime while
-the images and Compose contract remain OCI/Podman-compatible.
+CI builds tagged OCI images, executes critical gates, a clean Compose smoke test, and one previous-
+version upgrade/rollback rehearsal, then publishes a reviewable release evidence summary. Docker
+Compose remains the verified development runtime while the images and Compose contract remain
+OCI/Podman-compatible.
 
 ### 10. Explicitly not in this sprint
 
@@ -1139,6 +1245,7 @@ the images and Compose contract remain OCI/Podman-compatible.
 - No cloud production deployment.
 - No Helm.
 - No multi-region design.
+- No blue-green, canary, or feature-flag platform without a demonstrated release risk that needs it.
 - No recreation of the development environment already delivered in Sprint 3.
 
 ### 11. Risks
@@ -1167,11 +1274,18 @@ Security and operations must validate a working system, not decorate an incomple
 - OIDC-compatible authentication adapter and local development identity provider/profile.
 - RBAC for operator, supervisor, auditor, administrator.
 - Server-side authority checks for all mutations.
+- Organization/tenant and role-based policy access enforced as metadata security filters before
+  vector search, not by removing unauthorized results afterward.
 - PII/log redaction rules and tests.
 - Secrets and outbound-provider allowlist guidance.
 - Prompt-injection/tool-misuse threat model.
+- Governed policy ingestion: authenticated source, checksum, validation, approval/quarantine state,
+  provenance, and rejection of untrusted embedded instructions.
+- Policy deletion, permission-change, re-index, and backup/restore procedures with propagation tests.
 - Rate-limit and API-gateway contract.
 - Backup/restore, migration rollback, reconciliation, incident, and deployment runbooks.
+- Capacity/performance rehearsal against the initial design envelope, with bottlenecks and unproven
+  assumptions recorded instead of converted into production SLA claims.
 - Optional Supabase managed-PostgreSQL deployment profile using the existing database contract.
 - One n8n inbound-task or escalation flow.
 - Final readiness review with evidence-backed limitations.
@@ -1205,7 +1319,12 @@ docs/production/READINESS_REVIEW.md
 ### 7. Tests required
 
 - Authorization matrix and tenant/object access.
+- Retrieval authorization: cross-tenant and unauthorized-policy chunks never enter the candidate set.
 - Security: injection payloads, malicious retrieval text, log/PII leakage.
+- Ingestion security: tampered source, unauthorized ingestion, quarantined content, poisoned metadata,
+  and embedded instruction attacks.
+- Lifecycle: policy deletion/permission changes propagate to the active index while historical
+  evidence snapshots remain auditable under restricted access.
 - Rate-limit/gateway contract.
 - Backup/restore rehearsal.
 - Migration rollback rehearsal.
@@ -1213,18 +1332,26 @@ docs/production/READINESS_REVIEW.md
   readiness, and backup/restore checks against that managed database.
 - Full Compose E2E with authenticated user roles.
 - Final failure/recovery regression suite.
+- Capacity smoke: documented workload validates the initial concurrency/task/corpus envelope and
+  captures API, queue, retrieval, and worker saturation signals.
 
 ### 8. QA checklist
 
 - Operator cannot approve without authority.
 - Auditor cannot mutate.
 - Retrieved policy cannot inject tool instructions.
+- Retrieval applies organization/role filters before similarity search.
+- Only approved policy versions can enter the active index; quarantined or tampered documents cannot.
+- Deletion and permission changes have a tested propagation bound and do not leak through stale
+  indexes, caches, logs, or evaluation artifacts.
+- Backup restore and re-index reproduce the expected corpus manifest and version identifiers.
 - Secrets and sensitive fields are redacted.
 - Runbooks match actual commands.
 - Local PostgreSQL remains the reproducible development baseline; Supabase is labelled an optional
   managed deployment target.
 - Supabase credentials never enter source control, logs, screenshots, or generated evidence.
 - Readiness review clearly separates local production-shaped proof from deployed production operation.
+- Readiness review records which non-functional targets passed, failed, or remain unproven.
 
 ### 9. Definition of done
 
@@ -1330,7 +1457,10 @@ messages.
 #### RAG retrieval tests
 
 Use a fixed versioned corpus. Assert applicable citations, negative cases, conflicts, and snapshot
-retention. Do not accept similarity score alone as correctness.
+retention. Maintain labelled query-to-clause relevance judgments and report Recall@k, MRR or nDCG,
+applicability precision, abstention, exact citation validity, and latency by meaningful dataset slice.
+Test corpus/chunking/embedding/index version changes as regressions. Do not accept similarity score or
+a correct final answer alone as retrieval correctness.
 
 #### Approval and authorization tests
 

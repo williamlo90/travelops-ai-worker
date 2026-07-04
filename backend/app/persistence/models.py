@@ -108,6 +108,7 @@ class AgentRunModel(Base):
     )
 
     task: Mapped[TaskModel] = relationship(back_populates="runs")
+    tool_attempts: Mapped[list["ToolAttemptModel"]] = relationship(back_populates="run")
 
 
 class AuditEventModel(Base):
@@ -170,3 +171,73 @@ class BookingSnapshotModel(Base):
     captured_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
+
+
+class ToolAttemptModel(Base):
+    __tablename__ = "tool_attempts"
+    __table_args__ = (
+        CheckConstraint(
+            "outcome IN ('succeeded', 'rejected', 'uncertain')",
+            name="ck_tool_attempts_outcome",
+        ),
+        CheckConstraint(
+            "side_effect_state IN ('not_attempted', 'none', 'confirmed', 'possible')",
+            name="ck_tool_attempts_side_effect_state",
+        ),
+        Index("ix_tool_attempts_run_started", "run_id", "started_at"),
+        Index("ix_tool_attempts_idempotency", "tool_name", "idempotency_key"),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    tool_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    outcome: Mapped[str] = mapped_column(String(16), nullable=False)
+    side_effect_state: Mapped[str] = mapped_column(String(16), nullable=False)
+    idempotency_key: Mapped[str | None] = mapped_column(String(128))
+    request_data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    response_data: Mapped[dict[str, Any] | None] = mapped_column(JSONB)
+    error_code: Mapped[str | None] = mapped_column(String(64))
+    started_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+    finished_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    run: Mapped[AgentRunModel] = relationship(back_populates="tool_attempts")
+    receipt: Mapped["ExternalReceiptModel | None"] = relationship(
+        back_populates="tool_attempt", uselist=False
+    )
+
+
+class ExternalReceiptModel(Base):
+    __tablename__ = "external_receipts"
+    __table_args__ = (
+        UniqueConstraint("tool_attempt_id", name="uq_external_receipts_tool_attempt_id"),
+        UniqueConstraint(
+            "provider",
+            "tool_name",
+            "idempotency_key",
+            name="uq_external_receipts_provider_tool_idempotency",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    tool_attempt_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True),
+        ForeignKey("tool_attempts.id", ondelete="RESTRICT"),
+        nullable=False,
+    )
+    provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    tool_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    external_reference: Mapped[str] = mapped_column(String(64), unique=True, nullable=False)
+    idempotency_key: Mapped[str] = mapped_column(String(128), nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    data: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+    tool_attempt: Mapped[ToolAttemptModel] = relationship(back_populates="receipt")

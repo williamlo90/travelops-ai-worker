@@ -1,6 +1,6 @@
 # TravelOps Backend
 
-Status: Backend Sprint 1 foundation implemented.
+Status: Backend Sprint 5 typed tools and deterministic provider simulator implemented.
 
 The backend will be a Python 3.12 FastAPI modular monolith. PostgreSQL owns durable business and
 workflow state. Redis will be introduced only when asynchronous execution requires it.
@@ -67,5 +67,6 @@ Seed the deterministic, explicitly labelled demo task:
 python -m uv run python scripts/seed_demo.py
 ```
 
-The seed is idempotent. Redis, LangGraph, provider tools, and Compose remain outside the current
-runtime.
+The seed is idempotent. Provider tools are currently invoked as internal application contracts; no
+public simulator mutation endpoint is exposed. Redis, LangGraph, live policy retrieval, and real
+provider credentials remain outside the current runtime.
