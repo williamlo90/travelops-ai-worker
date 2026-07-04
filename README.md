@@ -4,12 +4,14 @@ Enterprise agentic workflow for safely handling travel-operation requests such a
 
 ## Current status
 
-Frontend Sprint 7 and Backend Sprint 5 are complete. The Docker Compose application now serves the
+Frontend Sprint 7 and Backend Sprint 6 are complete. The Docker Compose application now serves the
 Task Inbox and RF-1042 Workspace through FastAPI and durable PostgreSQL booking/customer snapshots,
 with validated API contracts and real desktop/laptop E2E coverage. Typed booking/customer/refund tools
 now execute against a deterministic provider simulator, with persisted redacted attempts, idempotent
-receipts, and explicit side-effect knowledge for controlled failures. Agent orchestration, RAG,
-authentication, production telemetry, and real external providers remain unimplemented.
+receipts, and explicit side-effect knowledge for controlled failures. A durable LangGraph refund flow
+now classifies a request, applies deterministic eligibility/risk rules, and persists a versioned draft
+proposal with PostgreSQL checkpoints. RAG, approval mutation, authentication, production telemetry,
+and real external providers remain unimplemented.
 
 ## Start the frontend
 
@@ -58,6 +60,7 @@ the optional Podman compatibility notes.
 - [Backend Sprint 3 evidence](./docs/evidence/backend-sprint-03/README.md)
 - [Backend Sprint 4 evidence](./docs/evidence/backend-sprint-04/README.md)
 - [Backend Sprint 5 evidence](./docs/evidence/backend-sprint-05/README.md)
+- [Backend Sprint 6 evidence](./docs/evidence/backend-sprint-06/README.md)
 - [Database migration runbook](./docs/runbooks/DATABASE_MIGRATIONS.md)
 
 ## Verification

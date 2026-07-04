@@ -6,6 +6,7 @@ from alembic import command
 from alembic.config import Config
 from sqlalchemy import text
 
+from app.persistence.checkpoints import setup_checkpoint_schema
 from app.persistence.database import Database
 
 
@@ -24,6 +25,7 @@ def migrated_database(test_database_url: str) -> Iterator[None]:
     config = Config("alembic.ini")
     command.downgrade(config, "base")
     command.upgrade(config, "head")
+    setup_checkpoint_schema(test_database_url)
     try:
         yield
     finally:

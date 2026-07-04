@@ -100,6 +100,10 @@ class AgentRunModel(Base):
     status: Mapped[str] = mapped_column(String(32), nullable=False)
     version: Mapped[int] = mapped_column(Integer, nullable=False, default=1)
     correlation_id: Mapped[str] = mapped_column(String(128), nullable=False)
+    model_provider: Mapped[str | None] = mapped_column(String(64))
+    model_version: Mapped[str | None] = mapped_column(String(64))
+    prompt_version: Mapped[str | None] = mapped_column(String(64))
+    graph_version: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), nullable=False, default=utc_now
     )
@@ -241,3 +245,55 @@ class ExternalReceiptModel(Base):
     )
 
     tool_attempt: Mapped[ToolAttemptModel] = relationship(back_populates="receipt")
+
+
+class RiskDecisionModel(Base):
+    __tablename__ = "risk_decisions"
+    __table_args__ = (UniqueConstraint("run_id", name="uq_risk_decisions_run_id"),)
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    requires_approval: Mapped[bool] = mapped_column(nullable=False)
+    risk_codes: Mapped[list[str]] = mapped_column(JSONB, nullable=False)
+    explanation: Mapped[str] = mapped_column(Text, nullable=False)
+    rule_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )
+
+
+class ProposalVersionModel(Base):
+    __tablename__ = "proposal_versions"
+    __table_args__ = (
+        UniqueConstraint("task_id", "version", name="uq_proposal_versions_task_version"),
+        UniqueConstraint("run_id", name="uq_proposal_versions_run_id"),
+        CheckConstraint("version > 0", name="ck_proposal_versions_version_positive"),
+        CheckConstraint(
+            "status = 'draft_waiting_evidence'",
+            name="ck_proposal_versions_status",
+        ),
+    )
+
+    id: Mapped[UUID] = mapped_column(PG_UUID(as_uuid=True), primary_key=True, default=uuid4)
+    task_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("tasks.id", ondelete="RESTRICT"), nullable=False
+    )
+    run_id: Mapped[UUID] = mapped_column(
+        PG_UUID(as_uuid=True), ForeignKey("agent_runs.id", ondelete="RESTRICT"), nullable=False
+    )
+    version: Mapped[int] = mapped_column(Integer, nullable=False)
+    status: Mapped[str] = mapped_column(String(32), nullable=False)
+    tool_name: Mapped[str] = mapped_column(String(64), nullable=False)
+    parameters: Mapped[dict[str, Any]] = mapped_column(JSONB, nullable=False)
+    amount: Mapped[Decimal] = mapped_column(Numeric(12, 2), nullable=False)
+    currency: Mapped[str] = mapped_column(String(3), nullable=False)
+    expected_postcondition: Mapped[str] = mapped_column(Text, nullable=False)
+    model_provider: Mapped[str] = mapped_column(String(64), nullable=False)
+    model_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    prompt_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    graph_version: Mapped[str] = mapped_column(String(64), nullable=False)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), nullable=False, default=utc_now
+    )

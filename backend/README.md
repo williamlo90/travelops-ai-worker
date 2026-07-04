@@ -1,6 +1,6 @@
 # TravelOps Backend
 
-Status: Backend Sprint 5 typed tools and deterministic provider simulator implemented.
+Status: Backend Sprint 6 durable agent orchestration implemented.
 
 The backend will be a Python 3.12 FastAPI modular monolith. PostgreSQL owns durable business and
 workflow state. Redis will be introduced only when asynchronous execution requires it.
@@ -23,6 +23,8 @@ http://127.0.0.1:8000/api/health/live
 http://127.0.0.1:8000/api/health/ready
 http://127.0.0.1:8000/api/tasks
 http://127.0.0.1:8000/api/tasks/RF-1042
+http://127.0.0.1:8000/api/agent-runs/{run_id}
+http://127.0.0.1:8000/api/tasks/RF-1042/proposals/1
 http://127.0.0.1:8000/docs
 ```
 
@@ -53,6 +55,7 @@ Set `TRAVELOPS_DATABASE_URL`, then run:
 
 ```powershell
 python -m uv run alembic upgrade head
+python -m uv run python scripts/setup_checkpoints.py
 ```
 
 Rollback one migration only during a reviewed rollback procedure:
@@ -67,6 +70,15 @@ Seed the deterministic, explicitly labelled demo task:
 python -m uv run python scripts/seed_demo.py
 ```
 
-The seed is idempotent. Provider tools are currently invoked as internal application contracts; no
-public simulator mutation endpoint is exposed. Redis, LangGraph, live policy retrieval, and real
-provider credentials remain outside the current runtime.
+The seed is idempotent. Start the deterministic refund graph with:
+
+```powershell
+Invoke-RestMethod -Method Post `
+  -Uri http://127.0.0.1:8000/api/tasks/RF-1042/agent-runs `
+  -ContentType application/json `
+  -Body '{}'
+```
+
+Provider tools remain internal application contracts; no public simulator mutation endpoint is
+exposed. Redis, live policy retrieval, approval mutation, and real provider credentials remain
+outside the current runtime.

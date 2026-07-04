@@ -55,7 +55,7 @@ def validate_run_transition(current: RunStatus, target: RunStatus) -> None:
 
 
 class AgentRunCreate(BaseModel):
-    public_id: str = Field(pattern=r"^AR-\d{4}$")
+    public_id: str = Field(pattern=r"^AR-[A-Z0-9]{4,12}$")
     task_id: UUID
     correlation_id: str = Field(min_length=1, max_length=128)
 
@@ -69,5 +69,9 @@ class AgentRunRecord(BaseModel):
     status: RunStatus
     version: int
     correlation_id: str
+    model_provider: str | None = None
+    model_version: str | None = None
+    prompt_version: str | None = None
+    graph_version: str | None = None
     created_at: datetime
     updated_at: datetime
